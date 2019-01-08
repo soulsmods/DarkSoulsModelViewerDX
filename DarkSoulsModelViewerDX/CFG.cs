@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace DarkSoulsModelViewerDX
 {
@@ -14,6 +15,8 @@ namespace DarkSoulsModelViewerDX
 
         public const string FileName = "DarkSoulsModelViewerDX_UserConfig.json";
         private static CFG Current = null;
+
+        private static bool NoSaveWarn = false;
 
         public static void Load()
         {
@@ -60,45 +63,56 @@ namespace DarkSoulsModelViewerDX
 
         public static void Save()
         {
-            lock (_lock_SaveLoadCFG)
+            try
             {
-                Current.InterrootLoader_Interroot = InterrootLoader.Interroot;
-                Current.InterrootLoader_Type = InterrootLoader.Type;
+                lock (_lock_SaveLoadCFG)
+                {
+                    Current.InterrootLoader_Interroot = InterrootLoader.Interroot;
+                    Current.InterrootLoader_Type = InterrootLoader.Type;
 
-                Current.GFX_LODMode = GFX.LODMode;
-                Current.GFX_LOD1Distance = GFX.LOD1Distance;
-                Current.GFX_LOD2Distance = GFX.LOD2Distance;
-                Current.GFX_EnableFrustumCulling = GFX.EnableFrustumCulling;
-                Current.GFX_EnableTextures = GFX.EnableTextures;
-                Current.GFX_Wireframe = GFX.Wireframe;
-                Current.GFX_EnableLighting = GFX.EnableLighting;
+                    Current.GFX_LODMode = GFX.LODMode;
+                    Current.GFX_LOD1Distance = GFX.LOD1Distance;
+                    Current.GFX_LOD2Distance = GFX.LOD2Distance;
+                    Current.GFX_EnableFrustumCulling = GFX.EnableFrustumCulling;
+                    Current.GFX_EnableTextures = GFX.EnableTextures;
+                    Current.GFX_Wireframe = GFX.Wireframe;
+                    Current.GFX_EnableLighting = GFX.EnableLighting;
 
-                Current.DBG_ShowModelNames = DBG.ShowModelNames;
-                Current.DBG_ShowModelBoundingBoxes = DBG.ShowModelBoundingBoxes;
-                Current.DBG_ShowModelSubmeshBoundingBoxes = DBG.ShowModelSubmeshBoundingBoxes;
-                Current.DBG_ShowPrimitiveNametags = DBG.ShowPrimitiveNametags;
-                Current.DBG_ShowGrid = DBG.ShowGrid;
-                Current.DBG_ShowFancyTextLabels = DBG.ShowFancyTextLabels;
+                    Current.DBG_ShowModelNames = DBG.ShowModelNames;
+                    Current.DBG_ShowModelBoundingBoxes = DBG.ShowModelBoundingBoxes;
+                    Current.DBG_ShowModelSubmeshBoundingBoxes = DBG.ShowModelSubmeshBoundingBoxes;
+                    Current.DBG_ShowPrimitiveNametags = DBG.ShowPrimitiveNametags;
+                    Current.DBG_ShowGrid = DBG.ShowGrid;
+                    Current.DBG_ShowFancyTextLabels = DBG.ShowFancyTextLabels;
 
-                Current.GFX_ModelDrawer_GoToModelsAsTheySpawn = GFX.ModelDrawer.GoToModelsAsTheySpawn;
+                    Current.GFX_ModelDrawer_GoToModelsAsTheySpawn = GFX.ModelDrawer.GoToModelsAsTheySpawn;
 
-                Current.GFX_World_CameraMoveSpeed = GFX.World.CameraMoveSpeed;
-                Current.GFX_World_CameraTurnSpeedGamepad = GFX.World.CameraTurnSpeedGamepad;
-                Current.GFX_World_CameraTurnSpeedMouse = GFX.World.CameraTurnSpeedMouse;
-                Current.GFX_World_FieldOfView = GFX.World.FieldOfView;
-                Current.GFX_World_NearClipDistance = GFX.World.NearClipDistance;
-                Current.GFX_World_FarClipDistance = GFX.World.FarClipDistance;
+                    Current.GFX_World_CameraMoveSpeed = GFX.World.CameraMoveSpeed;
+                    Current.GFX_World_CameraTurnSpeedGamepad = GFX.World.CameraTurnSpeedGamepad;
+                    Current.GFX_World_CameraTurnSpeedMouse = GFX.World.CameraTurnSpeedMouse;
+                    Current.GFX_World_FieldOfView = GFX.World.FieldOfView;
+                    Current.GFX_World_NearClipDistance = GFX.World.NearClipDistance;
+                    Current.GFX_World_FarClipDistance = GFX.World.FarClipDistance;
 
-                Current.GFX_Display_Width = GFX.Display.Width;
-                Current.GFX_Display_Height = GFX.Display.Height;
-                Current.GFX_Display_Format = GFX.Display.Format;
-                Current.GFX_Display_Vsync = GFX.Display.Vsync;
-                Current.GFX_Display_Fullscreen = GFX.Display.Fullscreen;
-                Current.GFX_Display_SimpleMSAA = GFX.Display.SimpleMSAA;
+                    Current.GFX_Display_Width = GFX.Display.Width;
+                    Current.GFX_Display_Height = GFX.Display.Height;
+                    Current.GFX_Display_Format = GFX.Display.Format;
+                    Current.GFX_Display_Vsync = GFX.Display.Vsync;
+                    Current.GFX_Display_Fullscreen = GFX.Display.Fullscreen;
+                    Current.GFX_Display_SimpleMSAA = GFX.Display.SimpleMSAA;
 
-                var json = Newtonsoft.Json.JsonConvert.SerializeObject(
-                    Current, Newtonsoft.Json.Formatting.Indented);
-                File.WriteAllText(FileName, json);
+                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(
+                        Current, Newtonsoft.Json.Formatting.Indented);
+                    File.WriteAllText(FileName, json);
+                }
+            }
+            catch (Exception e)
+            {
+                if (!NoSaveWarn)
+                {
+                    NoSaveWarn = true;
+                    MessageBox.Show("Error: Failed to save configuration file. Your permissions may be incorrect. Your settings may not be saved upon exiting.");
+                }
             }
         }
 

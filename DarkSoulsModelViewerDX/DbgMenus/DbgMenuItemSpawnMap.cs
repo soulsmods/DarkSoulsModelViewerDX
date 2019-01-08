@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System;
+using System.Windows.Forms;
 
 namespace DarkSoulsModelViewerDX.DbgMenus
 {
@@ -23,44 +25,53 @@ namespace DarkSoulsModelViewerDX.DbgMenus
 
         public static void UpdateSpawnIDs()
         {
-            var path = (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2 || InterrootLoader.Type == InterrootLoader.InterrootType.InterrootNB) ? @"\map\" : @"\map\MapStudio\";
-            var search = (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2 || InterrootLoader.Type == InterrootLoader.InterrootType.InterrootNB) ? @"m*" : @"*.msb";
-            var msbFiles = Directory.GetFileSystemEntries(InterrootLoader.GetInterrootPath(path), search)
-                .Select(Path.GetFileNameWithoutExtension);
-            IDList = new List<string>();
-            var IDSet = new HashSet<string>();
-            foreach (var cf in msbFiles)
+            try
             {
-                var dotIndex = cf.IndexOf('.');
-                if (dotIndex >= 0)
+                var path = (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2 || InterrootLoader.Type == InterrootLoader.InterrootType.InterrootNB) ? @"\map\" : @"\map\MapStudio\";
+                var search = (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2 || InterrootLoader.Type == InterrootLoader.InterrootType.InterrootNB) ? @"m*" : @"*.msb";
+                var msbFiles = Directory.GetFileSystemEntries(InterrootLoader.GetInterrootPath(path), search)
+                    .Select(Path.GetFileNameWithoutExtension);
+                IDList = new List<string>();
+                var IDSet = new HashSet<string>();
+                foreach (var cf in msbFiles)
                 {
-                    IDList.Add(cf.Substring(0, dotIndex));
-                    IDSet.Add(cf.Substring(0, dotIndex));
-                }
-                else
-                {
-                    IDList.Add(cf);
-                    IDSet.Add(cf);
-                }
-            }
-
-            var msbFilesDCX = Directory.GetFileSystemEntries(InterrootLoader.GetInterrootPath(path), search + ".dcx")
-                .Select(Path.GetFileNameWithoutExtension).Select(Path.GetFileNameWithoutExtension);
-            foreach (var cf in msbFilesDCX)
-            {
-                var dotIndex = cf.IndexOf('.');
-                if (dotIndex >= 0)
-                {
-                    if (!IDSet.Contains(cf.Substring(0, dotIndex)))
+                    var dotIndex = cf.IndexOf('.');
+                    if (dotIndex >= 0)
+                    {
                         IDList.Add(cf.Substring(0, dotIndex));
-                }
-                else
-                {
-                    if (!IDSet.Contains(cf))
+                        IDSet.Add(cf.Substring(0, dotIndex));
+                    }
+                    else
+                    {
                         IDList.Add(cf);
+                        IDSet.Add(cf);
+                    }
                 }
+
+                var msbFilesDCX = Directory.GetFileSystemEntries(InterrootLoader.GetInterrootPath(path), search + ".dcx")
+                    .Select(Path.GetFileNameWithoutExtension).Select(Path.GetFileNameWithoutExtension);
+                foreach (var cf in msbFilesDCX)
+                {
+                    var dotIndex = cf.IndexOf('.');
+                    if (dotIndex >= 0)
+                    {
+                        if (!IDSet.Contains(cf.Substring(0, dotIndex)))
+                            IDList.Add(cf.Substring(0, dotIndex));
+                    }
+                    else
+                    {
+                        if (!IDSet.Contains(cf))
+                            IDList.Add(cf);
+                    }
+                }
+                NeedsTextUpdate = true;
             }
-            NeedsTextUpdate = true;
+            catch (Exception e)
+            {
+                IDList = new List<string>();
+                NeedsTextUpdate = true;
+                MessageBox.Show("An error occured when populating the map list: " + e.Message, e.StackTrace);
+            }
         }
 
         public DbgMenuItemSpawnMap(SpawnerType spawnerType)
@@ -152,6 +163,8 @@ namespace DarkSoulsModelViewerDX.DbgMenus
 
         public override void OnClick()
         {
+            if (IDList.Count == 0)
+                return;
             if (SpawnType == SpawnerType.SpawnRegion)
                 InterrootLoader.LoadMsbRegions(IDList[IDIndex]);
             else if (SpawnType == SpawnerType.SpawnModel)

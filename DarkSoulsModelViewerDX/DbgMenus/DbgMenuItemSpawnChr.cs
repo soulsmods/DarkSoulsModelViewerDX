@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Windows.Forms;
+using System;
 
 namespace DarkSoulsModelViewerDX.DbgMenus
 {
@@ -19,36 +21,45 @@ namespace DarkSoulsModelViewerDX.DbgMenus
 
         public static void UpdateSpawnIDs()
         {
-            var path = (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2) ? @"\model\chr\" : @"\chr\";
-            var extensionBase = (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2 || InterrootLoader.Type == InterrootLoader.InterrootType.InterrootNB) ? @"*.bnd" : @"*.chrbnd";
-            var chrFiles = Directory.GetFiles(InterrootLoader.GetInterrootPath(path), extensionBase)
-                .Select(Path.GetFileNameWithoutExtension);
-            if (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDeS)
+            try
             {
-                chrFiles = Directory.GetFileSystemEntries(InterrootLoader.GetInterrootPath(path), "c*").Select(Path.GetFileNameWithoutExtension);
-            }
-            IDList = new List<int>();
-            var IDSet = new HashSet<int>();
-            foreach (var cf in chrFiles)
-            {
-                if (int.TryParse(cf.Substring(1, 4), out int id))
+                var path = (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2) ? @"\model\chr\" : @"\chr\";
+                var extensionBase = (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2 || InterrootLoader.Type == InterrootLoader.InterrootType.InterrootNB) ? @"*.bnd" : @"*.chrbnd";
+                var chrFiles = Directory.GetFiles(InterrootLoader.GetInterrootPath(path), extensionBase)
+                    .Select(Path.GetFileNameWithoutExtension);
+                if (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDeS)
                 {
-                    IDList.Add(id);
-                    IDSet.Add(id);
+                    chrFiles = Directory.GetFileSystemEntries(InterrootLoader.GetInterrootPath(path), "c*").Select(Path.GetFileNameWithoutExtension);
                 }
-            }
-
-            var chrFilesDCX = Directory.GetFiles(InterrootLoader.GetInterrootPath(path), extensionBase + ".dcx")
-                .Select(Path.GetFileNameWithoutExtension).Select(Path.GetFileNameWithoutExtension);
-            foreach (var cf in chrFilesDCX)
-            {
-                if (int.TryParse(cf.Substring(1, 4), out int id))
+                IDList = new List<int>();
+                var IDSet = new HashSet<int>();
+                foreach (var cf in chrFiles)
                 {
-                    if (!IDSet.Contains(id))
+                    if (int.TryParse(cf.Substring(1, 4), out int id))
+                    {
                         IDList.Add(id);
+                        IDSet.Add(id);
+                    }
                 }
+
+                var chrFilesDCX = Directory.GetFiles(InterrootLoader.GetInterrootPath(path), extensionBase + ".dcx")
+                    .Select(Path.GetFileNameWithoutExtension).Select(Path.GetFileNameWithoutExtension);
+                foreach (var cf in chrFilesDCX)
+                {
+                    if (int.TryParse(cf.Substring(1, 4), out int id))
+                    {
+                        if (!IDSet.Contains(id))
+                            IDList.Add(id);
+                    }
+                }
+                NeedsTextUpdate = true;
             }
-            NeedsTextUpdate = true;
+            catch (Exception e)
+            {
+                IDList = new List<int>();
+                NeedsTextUpdate = true;
+                MessageBox.Show("An error occured when populating the chr list: " + e.Message, e.StackTrace);
+            }
         }
 
         private void UpdateText()
@@ -111,6 +122,8 @@ namespace DarkSoulsModelViewerDX.DbgMenus
 
         public override void OnClick()
         {
+            if (IDList.Count == 0)
+                return;
             GFX.ModelDrawer.AddChr(IDList[IDIndex], GFX.World.GetSpawnPointInFrontOfCamera(distance: 5,
                 faceBackwards: false, lockPitch: true, alignToFloor: true));
         }

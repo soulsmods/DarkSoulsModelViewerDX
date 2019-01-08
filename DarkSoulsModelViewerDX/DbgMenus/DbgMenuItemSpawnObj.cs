@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System;
+using System.Windows.Forms;
 
 namespace DarkSoulsModelViewerDX.DbgMenus
 {
@@ -13,48 +15,57 @@ namespace DarkSoulsModelViewerDX.DbgMenus
 
         public static void UpdateSpawnIDs()
         {
-            string[] objFiles = null;
+            try
+            {
+                string[] objFiles = null;
 
-            if (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS1)
-            {
-                objFiles = Directory.GetFiles(InterrootLoader.GetInterrootPath(@"\obj\"), @"*.objbnd")
-                    .Select(Path.GetFileNameWithoutExtension)
-                    .ToArray();
-            }
-            else if (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2)
-            {
-                objFiles = Directory.GetFiles(InterrootLoader.GetInterrootPath(@"\model\obj\"), @"*.bnd")
-                    .Select(Path.GetFileNameWithoutExtension) //Remove .dcx
-                    .Select(Path.GetFileNameWithoutExtension) //Remove .objbnd
-                    .ToArray();
-            }
-            else if (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootNB)
-            {
-                objFiles = Directory.GetFiles(InterrootLoader.GetInterrootPath(@"\obj\"), @"*.bnd")
-                    .Select(Path.GetFileNameWithoutExtension)
-                    .ToArray();
-            }
-            else
-            {
-                objFiles = Directory.GetFiles(InterrootLoader.GetInterrootPath(@"\obj\"), @"*.objbnd.dcx")
-                    .Select(Path.GetFileNameWithoutExtension) //Remove .dcx
-                    .Select(Path.GetFileNameWithoutExtension) //Remove .objbnd
-                    .ToArray();
-            }
-
-            IDList = new List<int>();
-            var IDSet = new HashSet<int>();
-            foreach (var cf in objFiles)
-            {
-                if (int.TryParse(InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS3
-                    ? cf.Substring(1, 6) : (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2) ? cf.Substring(1, 7).Replace("_", "") : cf.Substring(1, 4), out int id))
+                if (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS1)
                 {
-                    IDList.Add(id);
-                    IDSet.Add(id);
+                    objFiles = Directory.GetFiles(InterrootLoader.GetInterrootPath(@"\obj\"), @"*.objbnd")
+                        .Select(Path.GetFileNameWithoutExtension)
+                        .ToArray();
                 }
-            }
+                else if (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2)
+                {
+                    objFiles = Directory.GetFiles(InterrootLoader.GetInterrootPath(@"\model\obj\"), @"*.bnd")
+                        .Select(Path.GetFileNameWithoutExtension) //Remove .dcx
+                        .Select(Path.GetFileNameWithoutExtension) //Remove .objbnd
+                        .ToArray();
+                }
+                else if (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootNB)
+                {
+                    objFiles = Directory.GetFiles(InterrootLoader.GetInterrootPath(@"\obj\"), @"*.bnd")
+                        .Select(Path.GetFileNameWithoutExtension)
+                        .ToArray();
+                }
+                else
+                {
+                    objFiles = Directory.GetFiles(InterrootLoader.GetInterrootPath(@"\obj\"), @"*.objbnd.dcx")
+                        .Select(Path.GetFileNameWithoutExtension) //Remove .dcx
+                        .Select(Path.GetFileNameWithoutExtension) //Remove .objbnd
+                        .ToArray();
+                }
 
-            NeedsTextUpdate = true;
+                IDList = new List<int>();
+                var IDSet = new HashSet<int>();
+                foreach (var cf in objFiles)
+                {
+                    if (int.TryParse(InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS3
+                        ? cf.Substring(1, 6) : (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2) ? cf.Substring(1, 7).Replace("_", "") : cf.Substring(1, 4), out int id))
+                    {
+                        IDList.Add(id);
+                        IDSet.Add(id);
+                    }
+                }
+
+                NeedsTextUpdate = true;
+            }
+            catch (Exception e)
+            {
+                IDList = new List<int>();
+                NeedsTextUpdate = true;
+                MessageBox.Show("An error occured when populating the obj list: " + e.Message, e.StackTrace);
+            }
         }
 
         public DbgMenuItemSpawnObj()
@@ -126,6 +137,9 @@ namespace DarkSoulsModelViewerDX.DbgMenus
 
         public override void OnClick()
         {
+            if (IDList.Count == 0)
+                return;
+
             GFX.ModelDrawer.AddObj(IDList[IDIndex],
                 GFX.World.GetSpawnPointInFrontOfCamera(distance: 5,
                 faceBackwards: false, lockPitch: true, alignToFloor: true));
