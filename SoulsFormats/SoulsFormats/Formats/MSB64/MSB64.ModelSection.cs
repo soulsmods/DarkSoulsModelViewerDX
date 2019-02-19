@@ -123,6 +123,11 @@ namespace SoulsFormats
                         Enemies.Add(enemy);
                         return enemy;
 
+                    case ModelType.Item:
+                        var enemy2 = new Model.Enemy(br);
+                        Enemies.Add(enemy2);
+                        return enemy2;
+
                     case ModelType.Player:
                         var player = new Model.Player(br, MSBVersion.MSBVersionBB);
                         Players.Add(player);
@@ -209,7 +214,8 @@ namespace SoulsFormats
                 long start = br.Position;
 
                 long nameOffset = br.ReadInt64();
-                br.AssertUInt32((uint)Type);
+                //br.AssertUInt32((uint)Type);
+                br.ReadInt32();
                 ID = br.ReadInt32();
                 long placeholderOffset = br.ReadInt64();
                 InstanceCount = br.ReadInt32();

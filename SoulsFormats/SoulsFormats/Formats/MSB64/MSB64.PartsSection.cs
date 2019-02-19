@@ -558,7 +558,7 @@ namespace SoulsFormats
                     UnkT02 = br.ReadInt32();
                     UnkT03 = br.ReadInt32();
                     UnkT04 = br.ReadInt32();
-                    br.AssertInt32(0);
+                    br.ReadInt32();
                     br.AssertInt32(0);
                     br.AssertInt32(0);
                     br.AssertInt32(0);

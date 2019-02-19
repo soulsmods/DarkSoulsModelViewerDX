@@ -50,7 +50,7 @@ namespace DarkSoulsModelViewerDX.DbgMenus
                 var IDSet = new HashSet<int>();
                 foreach (var cf in objFiles)
                 {
-                    if (int.TryParse(InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS3
+                    if (int.TryParse((InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS3 || InterrootLoader.Type == InterrootLoader.InterrootType.InterrootBloodborne)
                         ? cf.Substring(1, 6) : (InterrootLoader.Type == InterrootLoader.InterrootType.InterrootDS2) ? cf.Substring(1, 7).Replace("_", "") : cf.Substring(1, 4), out int id))
                     {
                         IDList.Add(id);
